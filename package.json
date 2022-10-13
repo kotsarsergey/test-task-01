@@ -1,0 +1,28 @@
+{
+  "dependencies": {
+    "@fastify/awilix": "^3.0.1",
+    "awilix": "^7.0.3",
+    "dotenv": "^16.0.3",
+    "fastify": "^4.7.0",
+    "knex": "^2.3.0",
+    "moment": "^2.29.4",
+    "nodemon": "^2.0.20",
+    "pg": "^8.8.0"
+  },
+  "name": "test-task",
+  "version": "1.0.0",
+  "main": "src/main.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "start": "node --trace-warnings ./src/main.js",
+    "dev": "nodemon ./src/main.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sergey Kotsar",
+  "license": "ISC",
+  "description": ""
+}

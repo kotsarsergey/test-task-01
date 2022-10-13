@@ -1,5 +1,6 @@
 const LessonsService = require("../services/lessons-service").LessonsService;
-const getLessonsValidation = require("../schemas/lesson.schema");
+const getLessonsValidation = require("../schemas/get-lessons-schema");
+const createLessonsValidation = require("../schemas/create-lessons-schema");
 
 async function routes(fastify, options) {
   const lessonsService = new LessonsService(fastify);
@@ -9,8 +10,9 @@ async function routes(fastify, options) {
     const result = lessonsService.getFilteredLessons(request.query);
     return result;
   });
-  fastify.post("/lessons", async (request, reply) => {
-    return { fuck: "you" };
+  fastify.post("/lessons",createLessonsValidation, async (request, reply) => {
+    const result = lessonsService.createLessons(request.body);
+    return true;
   });
 }
 

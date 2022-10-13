@@ -40,37 +40,6 @@ class LessonsService {
     return students;
   }
 
-  async getAllLessons(params) {
-    const { knex } = this.app;
-
-    console.log(params);
-
-    const dateFrom = params.date[0]
-      ? params.date[0]
-      : moment().add(-1, "month").toDate();
-    const dateTo = params.date[1];
-
-    let query = knex.select("*").from("lessons");
-    if (dateTo) {
-      query.where("date", ">=", dateFrom).andWhere("date", "<", dateTo);
-    } else {
-      query.where("date", "=", dateFrom);
-    }
-
-    const lessons = await query;
-
-    console.log(query.toSQL().toNative());
-
-    await lessons.reduce(async (acc, el, index) => {
-      el.students = await this.findStudentsForLesson(el.id);
-      el.teachers = await this.findTeachersForLesson(el.id);
-      acc[index] = el;
-      return acc;
-    }, []);
-
-    return lessons;
-  }
-
   async getFilteredLessons(params) {
     const { knex } = this.app;
 

@@ -12,3 +12,5 @@ npm init
 ## Comments
 
 Project was tested with PostgreSQL, should work with other RDBs.
+Used technologies: NodeJS, Fastify, KnexJS+pg, nodemon
+Migration: WIP

@@ -1,4 +1,4 @@
-const moment = require("moment");
+const DateTime = require("luxon").DateTime;
 
 class LessonsService {
   constructor(app) {
@@ -47,7 +47,7 @@ class LessonsService {
 
     const dateFrom = params.date[0]
       ? params.date[0]
-      : moment().add(-1, "month").toDate();
+      : DateTime.now().plus({ month: -1 }).toJSDate();
     const dateTo = params.date[1];
 
     const offset = (params.page - 1) * params.lessonsPerPage;
@@ -94,6 +94,80 @@ class LessonsService {
     }, []);
 
     return result;
+  }
+
+  async createLesson(date, title, status) {
+    const { knex } = this.app;
+
+    const query = await knex
+      .insert([{ date, title, status }], ["id"])
+      .into("lessons");
+
+    const createdId = await query;
+
+    return createdId;
+  }
+
+  //TODO: create insert objects from teacherIds 
+  async createLessonTeacherRelation(lessondId, teacherIds) {
+    const { knex } = this.app;
+
+    const query = await knex.insert([{ date, title }], ["id"]).into("lessons");
+
+    const createdId = await query;
+
+    return createdId;
+  }
+
+  async createLessonsWithRelations(params) {
+    const { knex } = this.app;
+    const createdLessonsIds = [];
+
+    if (params.lessonsCount && params.lastDate) {
+      throw new Error(
+        "invalid request body: shouldn't be lessonsCount and lastDate at the same time"
+      );
+    }
+
+    if (params.lessonsCount && params.lessonsCount > 300) {
+      throw new Error("invalid request body: lessonsCount should be <300");
+    }
+
+    const firstDateFormatted = DateTime.fromISO(params.firstDate);
+
+    if (params.lastDate) {
+      const lastDateFormatted = DateTime.fromISO(params.lastDate);
+      const duration = lastDateFormatted.diff(
+        firstDateFormatted,
+        "hours"
+      ).hours;
+
+      console.log("\nservice: checking duration - ", duration);
+      if (duration > 1) {
+        throw new Error(
+          "invalid request body: shouldn't be lessonsCount and lastDate at the same time"
+        );
+      }
+    }
+
+    //strategy: lessonsCount
+    if (params.lessonsCount) {
+      let currentDate = firstDateFormatted;
+      let i = 0;
+      while (i < params.lessonsCount && i < 300)
+        if (params.days.includes(currentDate.weekday)) {
+          let lessonId = this.createLesson(
+            currentDate.toISO(),
+            params.title,
+            true
+          );
+          this.createLessonTeacherRelation(lessonId,params.teacherIds)
+        }
+        createdLessonsIds.push(lessonId);
+      currentDate = currentDate.plus({ day: 1 });
+    }
+
+    return createdLessonsIds;
   }
 }
 

@@ -2,6 +2,7 @@ const createLessonsValidation = {
   schema: {
     body: {
       type: "object",
+      required: ["teacherIds", "title", "days", "firstDate"],
       properties: {
         teacherIds: {
           type: "array",
@@ -12,7 +13,7 @@ const createLessonsValidation = {
         },
         days: {
           type: "array",
-          items: { type: "number" },
+          items: { type: "number", minimum: 1, maximum: 7 },
         },
         firstDate: {
           type: "string",

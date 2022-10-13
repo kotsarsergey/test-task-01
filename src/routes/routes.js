@@ -6,13 +6,14 @@ async function routes(fastify, options) {
   const lessonsService = new LessonsService(fastify);
 
   fastify.get("/", getLessonsValidation, async (request, reply) => {
-    //const result = lessonsService.getAllLessons(request.query);
     const result = lessonsService.getFilteredLessons(request.query);
     return result;
   });
-  fastify.post("/lessons",createLessonsValidation, async (request, reply) => {
-    const result = lessonsService.createLessons(request.body);
-    return true;
+
+  //TODO: not catching error
+  fastify.post("/lessons", createLessonsValidation, async (request, reply) => {
+    const result = lessonsService.createLessonsWithRelations(request.body);
+    return result;
   });
 }
 

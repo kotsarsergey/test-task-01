@@ -43,8 +43,6 @@ class LessonsService {
   async getFilteredLessons(params) {
     const { knex } = this.app;
 
-    console.log(params);
-
     const dateFrom = params.date[0]
       ? params.date[0]
       : DateTime.now().plus({ month: -1 }).toJSDate();
@@ -99,74 +97,86 @@ class LessonsService {
   async createLesson(date, title, status) {
     const { knex } = this.app;
 
-    const query = await knex
+    const createdId = await knex
       .insert([{ date, title, status }], ["id"])
       .into("lessons");
 
-    const createdId = await query;
-
-    return createdId;
+    return createdId[0];
   }
 
-  //TODO: create insert objects from teacherIds 
+  //TODO: create insert objects from teacherIds
   async createLessonTeacherRelation(lessondId, teacherIds) {
     const { knex } = this.app;
+    const err = new Error();
 
-    const query = await knex.insert([{ date, title }], ["id"]).into("lessons");
+    const objectsToInsert = teacherIds.map((el) => {
+      return { lesson_id: lessondId, teacher_id: el };
+    });
 
-    const createdId = await query;
+    const results = await knex
+      .insert(objectsToInsert, ["teacher_id", "lesson_id"])
+      .into("lesson_teachers");
 
-    return createdId;
+    return true;
   }
 
   async createLessonsWithRelations(params) {
-    const { knex } = this.app;
     const createdLessonsIds = [];
 
+    const err = new Error();
+    err.statusCode = 400;
+
     if (params.lessonsCount && params.lastDate) {
-      throw new Error(
-        "invalid request body: shouldn't be lessonsCount and lastDate at the same time"
-      );
+      err.message =
+        "invalid request body: shouldn't be lessonsCount and lastDate at the same time";
+      throw err;
     }
 
     if (params.lessonsCount && params.lessonsCount > 300) {
-      throw new Error("invalid request body: lessonsCount should be <300");
+      err.message = "invalid request body: lessonsCount should be <300";
+      throw err;
     }
 
     const firstDateFormatted = DateTime.fromISO(params.firstDate);
+    const lastDateFormatted = params.lastDate
+      ? DateTime.fromISO(params.lastDate)
+      : null;
 
     if (params.lastDate) {
-      const lastDateFormatted = DateTime.fromISO(params.lastDate);
       const duration = lastDateFormatted.diff(
         firstDateFormatted,
         "hours"
-      ).hours;
+      ).years;
 
       console.log("\nservice: checking duration - ", duration);
       if (duration > 1) {
-        throw new Error(
-          "invalid request body: shouldn't be lessonsCount and lastDate at the same time"
-        );
+        err.message =
+          "invalid request body: difference between dates should be less than 1 year";
+        throw err;
       }
     }
 
-    //strategy: lessonsCount
-    if (params.lessonsCount) {
-      let currentDate = firstDateFormatted;
-      let i = 0;
-      while (i < params.lessonsCount && i < 300)
-        if (params.days.includes(currentDate.weekday)) {
-          let lessonId = this.createLesson(
-            currentDate.toISO(),
-            params.title,
-            true
-          );
-          this.createLessonTeacherRelation(lessonId,params.teacherIds)
-        }
-        createdLessonsIds.push(lessonId);
+    let currentDate = firstDateFormatted;
+    let i = 0;
+    while (
+      ((i < params.lessonsCount && params.lessonsCount) ||
+        (lastDateFormatted && currentDate < lastDateFormatted)) &&
+      i < 300 &&
+      currentDate.diff(firstDateFormatted,"years").years < 1
+    ) {
+      console.log('WIP: ',currentDate.diff(firstDateFormatted,"years").years)
+      if (params.days.includes(currentDate.weekday)) {
+        let lessonId = await this.createLesson(
+          currentDate.toISO(),
+          params.title,
+          true
+        );
+        i++;
+        createdLessonsIds.push(lessonId.id);
+        await this.createLessonTeacherRelation(lessonId.id, params.teacherIds);
+      }
       currentDate = currentDate.plus({ day: 1 });
     }
-
     return createdLessonsIds;
   }
 }

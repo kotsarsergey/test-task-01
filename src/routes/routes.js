@@ -10,7 +10,6 @@ async function routes(fastify, options) {
     return result;
   });
 
-  //TODO: not catching error
   fastify.post("/lessons", createLessonsValidation, async (request, reply) => {
     const result = lessonsService.createLessonsWithRelations(request.body);
     return result;
